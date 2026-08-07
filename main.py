@@ -18,10 +18,9 @@ acceleration:float = 10
 velocity:float = 0 #Speed the bird is FALLING
 space:list[str] = ["up", "locked"]
 
-birds_frames:list[pygame.Surface] = []
-bird_sprites_sheet:pygame.Surface = pygame.image.load("assets\\Bird1-5 (2).png").convert()
-for frame in range(3):
-    birds_frames.append(get_image(bird_sprites_sheet, frame, 16, 16, 2, (0,0,0)))
+for frame in ["down","mid","up"]:
+    bird_sprites_sheet:pygame.Surface = pygame.image.load("assets\\Game Objects\\yellowbird-downflap.png").convert()
+
 
 
 while running:
