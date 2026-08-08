@@ -49,10 +49,13 @@ y:float = 30
 acceleration:float = 15
 velocity:float = 0
 space:list[str] = ["up", "locked"]
+scale:float = 1.5
 
 bird_frames:list[pygame.Surface] = []
 for frame in ["down","mid","up"]:
     bird_frames.append(pygame.image.load(f"assets\\Game Objects\\yellowbird-{frame}flap.png").convert_alpha())
+#Add resizing
+
 
 pipe_sprite:pygame.Surface = pygame.image.load("assets\\Game Objects\\pipe-green.png").convert_alpha()
 
