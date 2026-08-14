@@ -121,5 +121,5 @@ def main():
         delta_time = clock.tick(60) / 1000
         delta_time = max(0.001, min(0.1, delta_time))
 
-if __name__ == "main.py":
+if __name__ == "__main__":
     main()
