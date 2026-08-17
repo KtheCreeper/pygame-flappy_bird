@@ -2,7 +2,6 @@ import pygame
 import random
 from tools import *
 import sys
-import copy
 import os
 from typing import Optional
 
@@ -37,33 +36,57 @@ class Pipe:
         self.object.render(screen, 0)
 
 
-def spawn_pipes(pipes:list[Pipe], pipe_sprite:Sprite, pipe_speed:int) -> list[Pipe]:
-        gap = 150
-        pipe_height = pipe_sprite.image.get_height()
-        pipe_width = pipe_sprite.image.get_width()
-        gap_center = random.randint(150, 400)
-        bottom_y = gap_center + gap // 2
-        top_y = gap_center - gap // 2 - pipe_height
+def spawn_pipes(pipes: list[Pipe],pipe_sprite: Sprite,pipe_speed: int,scaling: dict[str, float]) -> list[Pipe]:
 
-        pipes.append(Pipe(
-            Object([copy.deepcopy(pipe_sprite)], pipe_width, pipe_height, 700, top_y),
-            pipe_speed, True
-        ))
-        pipes.append(Pipe(
-            Object([copy.deepcopy(pipe_sprite)], pipe_width, pipe_height, 700, bottom_y),
-            pipe_speed, False, scored=True
-        ))
+    pipe_width = pipe_sprite.width
+    pipe_height = pipe_sprite.height
 
-        return pipes
+    gap = int(150 * scaling["universal"] * scaling["pipe"])
+    gap_center = random.randint(
+    int(150 * scaling["universal"] * scaling["pipe"]),
+    int(400 * scaling["universal"] * scaling["pipe"]))
+    top_y = gap_center - gap // 2 - pipe_height
+    bottom_y = gap_center + gap // 2
 
+    bottom_sprite = Sprite(pipe_sprite.image, 1.0)
+    bottom_object = Object(
+        [bottom_sprite],
+        pipe_width,
+        pipe_height,
+        700,
+        bottom_y,
+        pipe_sprite.original_width,
+        pipe_sprite.original_height
+    )
+    pipes.append(Pipe(bottom_object, pipe_speed, flip=False, scored=True))
+
+    top_sprite = Sprite(pipe_sprite.image, 1.0)
+    top_object = Object(
+        [top_sprite],
+        pipe_width,
+        pipe_height,
+        700,
+        top_y,
+        pipe_sprite.original_width,
+        pipe_sprite.original_height
+    )
+    pipes.append(Pipe(top_object, pipe_speed, flip=True))
+
+    return pipes
 
 def main():
     pygame.init()
 
-    background_scale:float = 1.5
+    scaling:dict[str,float] = {
+        "universal": 1.5,
+        "background": 1,
+        "bird": 1,
+        "pipe": 1
+    }
+
 
     temp_background_sprite:Sprite = Sprite(pygame.image.load(
-            resource_path("assets\\Game Objects\\background-day.png")), background_scale)
+            resource_path("assets\\Game Objects\\background-day.png")), scaling["universal"] * scaling["background"])
 
     screen = pygame.display.set_mode((temp_background_sprite.image.width, temp_background_sprite.image.height))
 
@@ -84,14 +107,13 @@ def main():
     background_sprite:Sprite = Sprite(
         pygame.image.load(
         resource_path("assets\\Game Objects\\background-day.png")
-    ).convert_alpha(), background_scale
+    ).convert_alpha(), scaling["universal"] * scaling["background"]
     )
     background_object:Object = Object([background_sprite],background_sprite.width, background_sprite.height, 0, 0)
 
     acceleration = 15
     velocity = 0
     space = ["up", "locked"]
-    bird_scale = 1
 
     bird_frames:list[Sprite,] = []
     for frame in ["down", "mid", "up"]:
@@ -100,7 +122,7 @@ def main():
                 pygame.image.load(
                     resource_path(f"assets\\Game Objects\\yellowbird-{frame}flap.png")
                 ).convert_alpha(),
-                bird_scale
+                scaling["universal"] * scaling["bird"]
             )
         )
 
@@ -114,12 +136,12 @@ def main():
     pipe_image = pygame.image.load(
         resource_path("assets\\Game Objects\\pipe-green.png")
     ).convert_alpha()
-    pipe_sprite = Sprite(pipe_image)
+    pipe_sprite = Sprite(pipe_image, scaling["universal"] * scaling["pipe"])
 
     pipes = []
     pipe_timer = 0
-    pipe_interval = 1.4
-    pipe_speed = 145
+    pipe_interval = 1.4 * scaling["universal"]
+    pipe_speed = 145 * scaling["universal"]
 
     text = Text(
         pygame.font.Font(
@@ -167,7 +189,7 @@ def main():
         if game:
             velocity = min(acceleration + velocity, 450)
             bird_object.y = round(
-                max(min(bird_object.y + (velocity * delta_time), 550), 0)
+                max(min(bird_object.y + (velocity * delta_time), screen.get_height()), 0)
             )
 
             if space == ["down", "unlocked"]:
@@ -177,7 +199,7 @@ def main():
             pipe_timer += delta_time
             if pipe_timer >= pipe_interval:
                 pipe_timer = 0
-                pipes = spawn_pipes(pipes, pipe_sprite, pipe_speed)
+                pipes = spawn_pipes(pipes, pipe_sprite, round(pipe_speed), scaling)
 
             for pipe in pipes:
                 score += pipe.update(delta_time)

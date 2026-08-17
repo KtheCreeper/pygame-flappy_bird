@@ -27,22 +27,30 @@ class SpriteSheet:
 
 class Sprite():
     def __init__(self, image:pygame.Surface,  scale:float=1):
+        self.original_width = image.get_width()
+        self.original_height = image.get_height()
+        if scale != 1:
+            image = pygame.transform.scale(image,(round(self.original_width * scale), round(self.original_height * scale)))
         self.image = image
         self.width = self.image.get_width()
         self.height = self.image.get_height()
-        self.image = pygame.transform.scale(self.image, ((self.width * scale), (self.height * scale)))
 
     def transform(self, scale:float=1, flip_x:bool=False, flip_y:bool=False) -> None:
-        self.image = pygame.transform.scale(self.image, ((self.width * scale), (self.height * scale)))
+        if scale != 1:
+            self.image = pygame.transform.scale(self.image,(round(self.original_width * scale), round(self.original_height * scale)))
         self.image = pygame.transform.flip(self.image, flip_x, flip_y)
+        self.width = self.image.get_width()
+        self.height = self.image.get_height()
 
 class Object():
-    def __init__(self, frames:list[Sprite], width:int, height:int, x:int, y:int):
+    def __init__(self, frames:list[Sprite], width:int, height:int, x:int, y:int, original_width:int|None=None, original_height:int|None=None):
         self.frames = frames
         self.width = width
         self.height = height
         self.x = x
         self.y = y
+        self.original_width = original_width if original_width is not None else width
+        self.original_height = original_height if original_height is not None else height
 
     def bulk_transform(self, selection:str="-1", scale:float=1, flip_x:bool=False, flip_y:bool=False) -> None:
             selection_list:list[str] = selection.split("")
