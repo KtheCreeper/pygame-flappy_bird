@@ -1,34 +1,32 @@
 import pygame
 
-class SpriteSheet:
-    def __init__(self, image:pygame.Surface):
-        self.image:pygame.Surface = image
+def sprite_split(sprite:Sprite, frame_width:int=1, frame_height:int=1, scale:float=1, flip_x:bool=False, flip_y:bool=False) -> list[Sprite]:
+    image = sprite.image
+    sheet_width, sheet_height = image.get_size()
+    frames:list[Sprite] = []
 
-    def sprite_split(self, frame_width:int=1, frame_height:int=1, scale:int=1, flip_x:bool=False, flip_y:bool=False) -> list[Sprite]:
-        sheet_width, sheet_height = self.image.get_size()
-        frames:list[Sprite] = []
+    columns:int = sheet_width // frame_width
+    rows:int = sheet_height // frame_height
 
-        columns:int = sheet_width // frame_width
-        rows:int = sheet_height // frame_height
+    for y in range(rows):
+        for x in range(columns):
+            frame:pygame.Surface = pygame.Surface((frame_width, frame_height)).convert_alpha()
+            frame.blit(image, (0, 0), (x * frame_width, y * frame_height, frame_width, frame_height))
 
-        for y in range(rows):
-            for x in range(columns):
-                frame:pygame.Surface = pygame.Surface((frame_width, frame_height)).convert_alpha()
-                frame.blit(self.image, (0, 0), (x * frame_width, y * frame_height, frame_width, frame_height))
+            if scale != 1:
+                frame = pygame.transform.scale(frame, (frame_width * scale, frame_height * scale))
+            image = pygame.transform.flip(image, flip_x, flip_y)
 
-                if scale != 1:
-                    frame = pygame.transform.scale(frame, (frame_width * scale, frame_height * scale))
-                self.image = pygame.transform.flip(self.image, flip_x, flip_y)
+            frames.append(Sprite(frame))
 
-                frames.append(Sprite(frame))
+    return frames
 
-        return frames
+
 
 
 class Sprite():
     def __init__(self, image:pygame.Surface,  scale:float=1):
-        self.original_width = image.get_width()
-        self.original_height = image.get_height()
+        self.original_width, self.original_height = image.get_size()
         if scale != 1:
             image = pygame.transform.scale(image,(round(self.original_width * scale), round(self.original_height * scale)))
         self.image = image
@@ -39,8 +37,15 @@ class Sprite():
         if scale != 1:
             self.image = pygame.transform.scale(self.image,(round(self.original_width * scale), round(self.original_height * scale)))
         self.image = pygame.transform.flip(self.image, flip_x, flip_y)
-        self.width = self.image.get_width()
-        self.height = self.image.get_height()
+        self.width, self.height = self.image.get_size()
+
+    def tile(self, new_size:tuple[int,int]) -> None:
+        new_image:pygame.Surface = pygame.Surface(new_size)
+        old_width, old_height = self.image.get_size()
+        for x in range(new_size[0]//old_width):
+            for y in range(new_size[1]//old_height):
+                pygame.Surface.blit(new_image, self.image, (x * old_width, y * old_width))
+                
 
 class Object():
     def __init__(self, frames:list[Sprite], width:int, height:int, x:int, y:int, original_width:int|None=None, original_height:int|None=None):
@@ -56,11 +61,17 @@ class Object():
             selection_list:list[str] = selection.split("")
             for i, item in enumerate(selection_list):
                 if item == "1" or selection == "-1":
-                    self.frames[i].image = pygame.transform.scale(self.frames[i].image, ((self.frames[i].width * scale), (self.height * scale)))
-                    self.frames[i].image = pygame.transform.flip(self.frames[i].image, flip_x, flip_y)
+                    self.frames[i].transform(scale, flip_x, flip_y)
+
+    def bulk_tile(self, new_size:tuple[int,int], selection:str="-1", ) -> None:
+            selection_list:list[str] = selection.split("")
+            for i, item in enumerate(selection_list):
+                if item == "1" or selection == "-1":
+                    self.frames[i].tile(new_size)
 
     def render(self, screen:pygame.Surface, frame:int) -> None:
         screen.blit(self.frames[frame].image, (self.x, self.y))
+
 
 class Text:
     def __init__(self,font:pygame.font.Font, x:int, y:int, colour:tuple[int, int, int], background_colour:tuple[int, int, int]|None=None):
@@ -76,6 +87,7 @@ class Text:
         text_rect.left = self.x
         text_rect.top = self.y
         screen.blit(draw_text, text_rect)
+
 
 class Button():
     def __init__(self, image:pygame.Surface, x:float, y:float, text_input:str, font:pygame.Font):

@@ -74,146 +74,168 @@ def spawn_pipes(pipes: list[Pipe],pipe_sprite: Sprite,pipe_speed: int,scaling: d
 
     return pipes
 
-def main():
-    pygame.init()
+class Game():
+    def __init__(self):
 
-    scaling:dict[str,float] = {
-        "universal": 1.5,
-        "background": 1,
-        "bird": 1,
-        "pipe": 1
-    }
+        pygame.init()
+
+        scaling:dict[str,float] = {"universal": 2, "background": 1, "base": 1, "bird": 1, "pipe": 1}
 
 
-    temp_background_sprite:Sprite = Sprite(pygame.image.load(
-            resource_path("assets\\Game Objects\\background-day.png")), scaling["universal"] * scaling["background"])
+        temp_background_sprite:Sprite = Sprite(pygame.image.load(
+                resource_path("assets\\Game Objects\\background-day.png")), scaling["universal"] * scaling["background"])
+        screen = pygame.display.set_mode((temp_background_sprite.image.width, temp_background_sprite.image.height))
+        del temp_background_sprite
+        pygame.display.set_caption('Flappy bird')
+        logo = pygame.image.load(
+            resource_path("assets\\Game Objects\\yellowbird-downflap.png")
+        ).convert_alpha()
+        pygame.display.set_icon(logo)
+        del logo
 
-    screen = pygame.display.set_mode((temp_background_sprite.image.width, temp_background_sprite.image.height))
-
-    del temp_background_sprite
-
-    pygame.display.set_caption('Flappy bird')
-
-    logo = pygame.image.load(
-        resource_path("assets\\Game Objects\\yellowbird-downflap.png")
-    ).convert_alpha()
-    pygame.display.set_icon(logo)
-
-    running = True
-    clock = pygame.time.Clock()
-    delta_time = 0.1
-    game = False
-
-    background_sprite:Sprite = Sprite(
-        pygame.image.load(
-        resource_path("assets\\Game Objects\\background-day.png")
-    ).convert_alpha(), scaling["universal"] * scaling["background"]
-    )
-    background_object:Object = Object([background_sprite],background_sprite.width, background_sprite.height, 0, 0)
-
-    acceleration = 15
-    velocity = 0
-    space = ["up", "locked"]
-
-    bird_frames:list[Sprite,] = []
-    for frame in ["down", "mid", "up"]:
-        bird_frames.append(
-            Sprite(
-                pygame.image.load(
-                    resource_path(f"assets\\Game Objects\\yellowbird-{frame}flap.png")
-                ).convert_alpha(),
-                scaling["universal"] * scaling["bird"]
-            )
+        background_sprite:Sprite = Sprite(
+            pygame.image.load(
+            resource_path("assets\\Game Objects\\background-day.png")
+        ).convert_alpha(), scaling["universal"] * scaling["background"]
         )
+        background_object:Object = Object([background_sprite],background_sprite.width, background_sprite.height, 0, 0)
 
-    bird_object = Object(
-        bird_frames,
-        bird_frames[0].image.get_width(),
-        bird_frames[0].image.get_height(),
-        30, 30
-    )
+        base_sprite:Sprite = Sprite(
+                    pygame.image.load(
+                    resource_path("assets\\Game Objects\\base.png")
+                ).convert_alpha(), scaling["universal"] * scaling["base"]
+                )
+        base_object:Object = Object([base_sprite],base_sprite.width, base_sprite.height, 0, (screen.height - base_sprite.height))
 
-    pipe_image = pygame.image.load(
-        resource_path("assets\\Game Objects\\pipe-green.png")
-    ).convert_alpha()
-    pipe_sprite = Sprite(pipe_image, scaling["universal"] * scaling["pipe"])
-
-    pipes = []
-    pipe_timer = 0
-    pipe_interval = 1.4 * scaling["universal"]
-    pipe_speed = 145 * scaling["universal"]
-
-    text = Text(
-        pygame.font.Font(
-            resource_path("assets\\UI\\m6x11plus.ttf"),
-            32
-        ),
-        screen.get_width() - 150,
-        15,
-        (255, 255, 255)
-    )
-
-    score = 0
-
-    while running:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
-                game = True
-
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE and space[1] == "unlocked":
-                space = ["down", "unlocked"]
-
-            if event.type == pygame.KEYUP and event.key == pygame.K_SPACE:
-                space = ["up", "unlocked"]
-
-        screen.fill("grey")
-
-        background_object.render(screen, 0)
         
 
-        if velocity > 75 and bird_object.y != 600:
-            frame = 0
-        elif 75 > velocity > -50 or bird_object.y == 600:
-            frame = 1
-        else:
-            frame = 2
-
-        bird_object.render(screen, frame)
-        bird_rect = bird_object.frames[frame].image.get_rect(
-            topleft=(30, int(bird_object.y))
-        )
-
-        if game:
-            velocity = min(acceleration + velocity, 450)
-            bird_object.y = round(
-                max(min(bird_object.y + (velocity * delta_time), screen.get_height()), 0)
+        bird_frames:list[Sprite,] = []
+        for frame in ["down", "mid", "up"]:
+            bird_frames.append(
+                Sprite(
+                    pygame.image.load(
+                        resource_path(f"assets\\Game Objects\\yellowbird-{frame}flap.png")
+                    ).convert_alpha(),
+                    scaling["universal"] * scaling["bird"]
+                )
             )
 
-            if space == ["down", "unlocked"]:
-                space[1] = "locked"
-                velocity = -400
+        bird_object = Object(
+            bird_frames,
+            bird_frames[0].image.get_width(),
+            bird_frames[0].image.get_height(),
+            30, 30
+        )
 
-            pipe_timer += delta_time
-            if pipe_timer >= pipe_interval:
-                pipe_timer = 0
-                pipes = spawn_pipes(pipes, pipe_sprite, round(pipe_speed), scaling)
+        pipe_image = pygame.image.load(
+            resource_path("assets\\Game Objects\\pipe-green.png")
+        ).convert_alpha()
+        pipe_sprite = Sprite(pipe_image, scaling["universal"] * scaling["pipe"])
 
-            for pipe in pipes:
-                score += pipe.update(delta_time)
-                pipe.draw(screen)
-                if bird_rect.colliderect(pipe.rect):
-                    print("Hit pipe!")
+        text = Text(
+            pygame.font.Font(
+                resource_path("assets\\UI\\m6x11plus.ttf"),
+                32
+            ),
+            screen.get_width() - 150,
+            15,
+            (255, 255, 255)
+        )
+
+        self.high_score = 0
+        self.background_object = background_object
+        self.base_object = base_object
+        self.scaling = scaling
+        self.screen = screen
+        self.bird_object = bird_object
+        self.pipe_sprite = pipe_sprite
+        self.text = text
+
+    def run(self):
+        acceleration = 10 * self.scaling["universal"]
+        velocity = 0
+        space = ["up", "locked"]
+        running = True
+        clock = pygame.time.Clock()
+        delta_time = 0.1
+        playing = False
+        pipes = []
+        pipe_timer = 0
+        pipe_interval = 1.4 * self.scaling["universal"]
+        pipe_speed = 145 * self.scaling["universal"]
+        score = 0
+
+        while running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
                     sys.exit(0)
 
-        text.render(screen, f"Score: {score}")
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+                    playing = True
 
-        pygame.display.flip()
-        delta_time = clock.tick(60) / 1000
-        delta_time = max(0.001, min(0.1, delta_time))
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE and space[1] == "unlocked":
+                    space = ["down", "unlocked"]
+
+                if event.type == pygame.KEYUP and event.key == pygame.K_SPACE:
+                    space = ["up", "unlocked"]
+
+            self.screen.fill("grey")
+
+            self.background_object.render(self.screen, 0)
+            
+
+            if velocity > 75 and self.bird_object.y != 600:
+                frame = 0
+            elif 75 > velocity > -50 or self.bird_object.y == 600:
+                frame = 1
+            else:
+                frame = 2
+
+            self.bird_object.render(self.screen, frame)
+            self.bird_rect = self.bird_object.frames[frame].image.get_rect(
+                topleft=(30, int(self.bird_object.y))
+            )
+
+            if playing:
+                velocity = min(acceleration + velocity, 450)
+                self.bird_object.y = round(max(min(self.bird_object.y + (velocity * delta_time), (self.base_object.y - self.bird_object.height)), 0))
+
+                if space == ["down", "unlocked"]:
+                    space[1] = "locked"
+                    velocity = -250 * self.scaling["universal"]
+
+                pipe_timer += delta_time
+                if pipe_timer >= pipe_interval:
+                    pipe_timer = 0
+                    pipes = spawn_pipes(pipes, self.pipe_sprite, round(pipe_speed), self.scaling)
+
+                for pipe in pipes:
+                    score += pipe.update(delta_time)
+                    pipe.draw(self.screen)
+                    if self.bird_rect.colliderect(pipe.rect):
+                        print("Hit pipe!")
+                        running = False
+                    if pipe.object.x < 0:
+                        del pipe
+
+            self.base_object.render(self.screen, 0)
+
+            self.text.render(self.screen, f"Score: {score}")
+
+            pygame.display.flip()
+            delta_time = clock.tick(60) / 1000
+            delta_time = max(0.001, min(0.1, delta_time))
+
+
+        self.bird_object.y = 30
+        self.high_score = max(score, self.high_score)
+
+
+
 
 
 if __name__ == "__main__":
-    main()
+    global game
+    game = Game()
+    game.run()
+    game.run()
