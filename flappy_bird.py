@@ -200,15 +200,15 @@ class Game():
                 if event.type == pygame.QUIT:
                     sys.exit(0)
                 
-                if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE and space["jump_locked"] == False:
+                if (event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE) or event.type == pygame.FINGERMOTION and space["jump_locked"] == False:
                     space["bar_down"] = True
                     space["jump_locked"] = False
 
-                if event.type == pygame.KEYUP and event.key == pygame.K_SPACE:
+                if (event.type == pygame.KEYUP and event.key == pygame.K_SPACE) or event.type == pygame.FINGERUP:
                     space["bar_down"] = False
                     space["jump_locked"] = False
 
-                if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+                if (event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE) or event.type == pygame.FINGERDOWN:
                     playing = True
 
             current_size = self.screen.get_size()
