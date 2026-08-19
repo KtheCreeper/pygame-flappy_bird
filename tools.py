@@ -39,13 +39,16 @@ class Sprite():
         self.image = pygame.transform.flip(self.image, flip_x, flip_y)
         self.width, self.height = self.image.get_size()
 
-    def tile(self, new_size:tuple[int,int]) -> None:
-        new_image:pygame.Surface = pygame.Surface(new_size)
+    def tile(self, new_size: tuple[int, int]) -> None:
+        new_image = pygame.Surface(new_size, pygame.SRCALPHA)
         old_width, old_height = self.image.get_size()
-        for x in range(new_size[0]//old_width):
-            for y in range(new_size[1]//old_height):
-                pygame.Surface.blit(new_image, self.image, (x * old_width, y * old_width))
-                
+        for x in range(new_size[0] // old_width + 1):
+            for y in range(new_size[1] // old_height + 1):
+                new_image.blit(self.image, (x * old_width, y * old_height))
+        self.image = new_image
+        self.width, self.height = new_image.get_size()
+
+
 
 class Object():
     def __init__(self, frames:list[Sprite], width:int, height:int, x:int, y:int, original_width:int|None=None, original_height:int|None=None):
@@ -57,17 +60,24 @@ class Object():
         self.original_width = original_width if original_width is not None else width
         self.original_height = original_height if original_height is not None else height
 
-    def bulk_transform(self, selection:str="-1", scale:float=1, flip_x:bool=False, flip_y:bool=False) -> None:
-            selection_list:list[str] = selection.split("")
-            for i, item in enumerate(selection_list):
-                if item == "1" or selection == "-1":
-                    self.frames[i].transform(scale, flip_x, flip_y)
+    def bulk_transform(self, selection: str = "-1", scale: float = 1, flip_x: bool = False, flip_y: bool = False) -> None:
+        if selection == "-1":
+            for frame in self.frames:
+                frame.transform(scale, flip_x, flip_y)
+            return
+        for i, char in enumerate(selection):
+            if char == "1" and i < len(self.frames):
+                self.frames[i].transform(scale, flip_x, flip_y)
 
-    def bulk_tile(self, new_size:tuple[int,int], selection:str="-1", ) -> None:
-            selection_list:list[str] = selection.split("")
-            for i, item in enumerate(selection_list):
-                if item == "1" or selection == "-1":
-                    self.frames[i].tile(new_size)
+    def bulk_tile(self, new_size: tuple[int, int], selection: str = "-1") -> None:
+        if selection == "-1":
+            for frame in self.frames:
+                frame.tile(new_size)
+            return
+        for i, char in enumerate(selection):
+            if char == "1" and i < len(self.frames):
+                self.frames[i].tile(new_size)
+
 
     def render(self, screen:pygame.Surface, frame:int) -> None:
         screen.blit(self.frames[frame].image, (self.x, self.y))
